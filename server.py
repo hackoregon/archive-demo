@@ -22,13 +22,11 @@ methods = dict(GET=query_template + ") as result ) r",
 @Request.application
 def application(request):
     groups = location.match(request.path).groups()
-    if not groups:
-        raise Exception('badz')
     db, schema, func_name, path = groups
     path = '' if path is None else path
     path = Json(filter(None, path.split('/')))
     method = request.method
-    function = "{}.{}{}".format(schema, method, func_name)
+    function = "{}.{}".format(schema, func_name)
     template = methods.get(method)
     if not template:
         raise Exception('bad method')
@@ -38,7 +36,7 @@ def application(request):
         args = ('', path, args)
     elif method == 'POST':
         args = ('', path, args, Json(loads(request.get_data())))
-    with psycopg2.connect("dbname=%s user=server" % db) as conn:
+    with psycopg2.connect("host='localhost' dbname='%s' user='server' password='server'" % db) as conn:
         with conn.cursor() as cur:
             cur.execute(query, args)
             return Response(cur.fetchone()[0])
